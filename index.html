@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potencias y Raíces - 6º de Primaria (Edición Pro)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .cube-container {
+      perspective: 800px;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+      cursor: grab;
+    }
+    .cube-container:active {
+      cursor: grabbing;
+    }
+    .cube-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+    .polycube {
+      position: absolute;
+      transform-style: preserve-3d;
+    }
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+    }
+    .face-front  { transform: rotateY(  0deg) translateZ(calc(var(--size) / 2)); background: #0284c7; }
+    .face-back   { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); background: #0369a1; }
+    .face-right  { transform: rotateY( 90deg) translateZ(calc(var(--size) / 2)); background: #38bdf8; }
+    .face-left   { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); background: #075985; }
+    .face-top    { transform: rotateX( 90deg) translateZ(calc(var(--size) / 2)); background: #7dd3fc; }
+    .face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); background: #0c4a6e; }
+    .disabled-options { pointer-events: none; }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen">
+
+  <header class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+      <h1 class="text-2xl font-bold tracking-tight">🚀 Potencias y Raíces (6º Primaria)</h1>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSound()" id="sound-btn" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 rounded-lg text-sm font-semibold transition">🔊 Sonido: ON</button>
+        <nav class="flex gap-1 bg-indigo-700 p-1 rounded-lg">
+          <button id="btn-learn" onclick="switchTab('learn')" class="px-3.5 py-1.5 rounded-md font-semibold bg-white text-indigo-700 shadow text-sm">Aprender</button>
+          <button id="btn-practice" onclick="switchTab('practice')" class="px-3.5 py-1.5 rounded-md font-semibold text-white hover:bg-indigo-600 transition text-sm">Reto (10 Preguntas)</button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 sm:p-6">
+    
+    <!-- PESTAÑA APRENDER -->
+    <section id="tab-learn" class="space-y-6">
+      <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+        <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">1. Elementos de una Potencia</h2>
+        <div class="flex flex-col md:flex-row items-center justify-around gap-6">
+          <div class="relative text-center font-mono bg-indigo-50 p-6 rounded-2xl border-2 border-indigo-200">
+            <span class="text-7xl font-extrabold text-indigo-700">2</span>
+            <sup class="text-4xl font-extrabold text-rose-500 relative -top-8">4</sup>
+          </div>
+          <div class="space-y-3 max-w-md">
+            <p><strong class="text-indigo-700">Base (2):</strong> El número grande que se multiplica por sí mismo.</p>
+            <p><strong class="text-rose-500">Exponente (4):</strong> El número pequeño que indica las veces que se repite la base.</p>
+            <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 text-amber-900 font-medium text-sm">
+              2<sup>4</sup> = 2 x 2 x 2 x 2 = 16
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+          <h3 class="text-lg font-bold text-sky-600 mb-2">Cuadrados (x²)</h3>
+          <p class="text-sm text-slate-600 mb-4">Representación en cuadrícula (Lado x Lado).</p>
+          <div class="flex flex-col items-center gap-4">
+            <div id="grid-2d" class="grid gap-1 bg-slate-200 p-2 rounded-lg border border-slate-300"></div>
+            <div class="w-full">
+              <label class="text-xs font-bold text-slate-500">Lado: <span id="val-sq">3</span></label>
+              <input type="range" min="1" max="5" value="3" class="w-full" oninput="updateSquare(this.value)">
+            </div>
+            <p id="lbl-sq" class="font-bold text-sky-700">3² = 3 x 3 = 9</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+          <h3 class="text-lg font-bold text-indigo-600 mb-2">Cubos 3D (x³)</h3>
+          <p class="text-sm text-slate-600 mb-2">Arrastra con el ratón o el dedo para rotar el cubo.</p>
+          <div class="cube-container" id="cube-box">
+            <div id="cube-3d" class="cube-3d" style="transform: rotateX(-20deg) rotateY(30deg);"></div>
+          </div>
+          <div class="mt-4">
+            <label class="text-xs font-bold text-slate-500">Arista: <span id="val-cu">3</span></label>
+            <input type="range" min="1" max="4" value="3" class="w-full" oninput="updateCube(this.value)">
+          </div>
+          <p id="lbl-cu" class="text-center font-bold text-indigo-700 mt-2">3³ = 3 x 3 x 3 = 27</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+          <h3 class="text-lg font-bold text-emerald-600 mb-2">Raíz Cuadrada (√)</h3>
+          <p class="text-sm text-slate-600 mb-4">Es la operación inversa al cuadrado.</p>
+          <div class="space-y-3">
+            <select id="select-sqrt" onchange="updateSqrt(this.value)" class="w-full p-2 border rounded-lg bg-slate-50 font-semibold text-slate-700 text-sm">
+              <option value="4">√4 (Raíz de 4)</option>
+              <option value="9" selected>√9 (Raíz de 9)</option>
+              <option value="16">√16 (Raíz de 16)</option>
+              <option value="25">√25 (Raíz de 25)</option>
+            </select>
+            <div id="sqrt-display" class="p-4 bg-emerald-50 rounded-lg text-center border border-emerald-200 font-bold text-emerald-800 text-lg">
+              √9 = 3 (porque 3² = 9)
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+          <h3 class="text-lg font-bold text-amber-600 mb-2">Potencias de Base 10</h3>
+          <p class="text-sm text-slate-600 mb-4">El exponente indica el número de ceros tras el 1.</p>
+          <div class="space-y-3">
+            <div class="flex items-center justify-center gap-2">
+              <span class="font-mono text-2xl font-extrabold text-amber-700">10</span>
+              <sup id="base10-exp-badge" class="text-xl font-extrabold text-rose-500">3</sup>
+              <span class="text-sm text-slate-500 ml-2">Exponente:</span>
+              <input type="number" id="exp-10" min="0" max="6" value="3" oninput="updateBase10(this.value)" class="w-16 p-1 border rounded text-center font-bold text-slate-700">
+            </div>
+            <div id="base10-display" class="p-4 bg-amber-50 rounded-lg text-center border border-amber-200 font-mono text-lg font-bold text-amber-800">
+              10³ = 1.000 (3 ceros)
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA PRACTICAR (RETO DE 10 PREGUNTAS) -->
+    <section id="tab-practice" class="hidden space-y-6">
+      
+      <!-- Panel de Control del Reto -->
+      <div id="practice-controls" class="bg-white p-5 rounded-xl shadow-md border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Selecciona el Tema del Reto:</label>
+          <select id="category-filter" class="p-2 border rounded-lg bg-slate-50 font-semibold text-slate-700 text-sm">
+            <option value="all">🌟 Todos los temas mezclados</option>
+            <option value="1">1. Base y Exponente</option>
+            <option value="2">2. Cuadrados y Cubos</option>
+            <option value="3">3. Raíces Cuadradas</option>
+            <option value="4">4. Potencias Base 10</option>
+            <option value="5">5. Problemas de la vida real</option>
+          </select>
+        </div>
+        <button onclick="startChallenge()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition flex items-center gap-2 text-base">
+          🚀 ¡Comenzar Reto de 10 Preguntas!
+        </button>
+      </div>
+
+      <!-- Tarjeta de Pregunta Activa (Oculta hasta empezar) -->
+      <div id="quiz-card" class="hidden bg-white rounded-xl shadow-xl p-6 sm:p-8 border border-slate-200 relative overflow-hidden">
+        
+        <!-- Cabecera de Progreso y Rachas -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 border-b pb-4">
+          <div>
+            <span id="q-progress" class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full">Pregunta 1 de 10</span>
+            <span id="q-category" class="ml-2 text-xs font-bold text-slate-400 uppercase">Tema</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div id="streak-badge" class="hidden px-3 py-1 bg-amber-100 text-amber-800 text-xs font-black rounded-full animate-bounce">
+              🔥 Racha: <span id="streak-count">0</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-semibold text-slate-500">Aciertos:</span>
+              <span id="live-score" class="text-xl font-black text-indigo-600 ml-1">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="q-title" class="text-xl sm:text-2xl font-bold text-slate-800 mb-6">Cargando...</h2>
+        
+        <!-- Botón de Pista -->
+        <div class="mb-4">
+          <button onclick="showHint()" id="hint-btn" class="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+            💡 ¿Necesitas una pista?
+          </button>
+          <div id="hint-box" class="hidden mt-2 p-3 bg-sky-50 border border-sky-200 rounded-lg text-sky-900 text-sm font-medium"></div>
+        </div>
+
+        <div id="q-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6"></div>
+
+        <div id="q-feedback" class="hidden p-4 rounded-lg font-medium text-sm mb-4"></div>
+
+        <div class="flex justify-end items-center border-t pt-4">
+          <button onclick="nextQuestion()" id="next-btn" class="hidden px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow transition">
+            Siguiente Pregunta ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Pantalla de Resultados Finales del Reto (Oculta al inicio) -->
+      <div id="results-card" class="hidden bg-white rounded-xl shadow-xl p-8 border border-slate-200 text-center space-y-6">
+        <div class="text-6xl" id="result-medal">🏆</div>
+        <h2 class="text-2xl font-black text-slate-800" id="result-title">¡Reto Completado!</h2>
+        <p class="text-slate-600" id="result-desc">Has conseguido X aciertos de 10.</p>
+        
+        <div class="flex justify-center gap-4 pt-2">
+          <button onclick="startChallenge()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition">
+            🔄 Jugar otro reto
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // GENERACIÓN DE BANCO DE PREGUNTAS
+    const allQuestions = [];
+
+    for (let i = 1; i <= 20; i++) {
+      const b = (i % 7) + 2;
+      const e = (i % 4) + 2;
+      const ans = Math.pow(b, e);
+      allQuestions.push({
+        id: i, cat: 1, catName: "Base y Exponente",
+        title: `¿Cuánto es ${b} elevado a ${e} (${b}<sup>${e}</sup>)?`,
+        options: [ans.toString(), (b * e).toString(), (ans + b).toString(), (ans - e).toString()].sort(() => Math.random() - 0.5),
+        correct: ans.toString(),
+        exp: `${b}<sup>${e}</sup> significa multiplicar ${b} por sí mismo ${e} veces y da ${ans}.`,
+        hint: `Recuerda: la base (${b}) se multiplica por sí misma tantas veces como dice el exponente (${e}).`
+      });
+    }
+
+    for (let i = 21; i <= 40; i++) {
+      const isCube = i % 2 === 0;
+      const val = (i % 6) + 2;
+      const ans = isCube ? Math.pow(val, 3) : Math.pow(val, 2);
+      const symbol = isCube ? `${val}³` : `${val}²`;
+      allQuestions.push({
+        id: i, cat: 2, catName: "Cuadrados y Cubos",
+        title: `Calcula el resultado de ${symbol}:`,
+        options: [ans.toString(), (val * (isCube ? 3 : 2)).toString(), (ans + 2).toString(), (ans - 1).toString()].sort(() => Math.random() - 0.5),
+        correct: ans.toString(),
+        exp: `${symbol} se calcula multiplicando ${isCube ? `${val} x ${val} x ${val}` : `${val} x ${val}`} = ${ans}.`,
+        hint: isCube ? `Un cubo (${val}³) es el número multiplicado por sí mismo tres veces.` : `Un cuadrado (${val}²) es el área de un cuadrado de lado ${val}.`
+      });
+    }
+
+    for (let i = 41; i <= 60; i++) {
+      const root = (i % 10) + 1;
+      const sq = root * root;
+      allQuestions.push({
+        id: i, cat: 3, catName: "Raíces Cuadradas",
+        title: `¿Cuál es el valor de √${sq}?`,
+        options: [root.toString(), (root + 1).toString(), (sq / 2).toString(), (root * 2).toString()].sort(() => Math.random() - 0.5),
+        correct: root.toString(),
+        exp: `√${sq} = ${root}, porque ${root}² = ${sq}.`,
+        hint: `Busca un número que, al multiplicarlo por sí mismo, te dé exactamente ${sq}.`
+      });
+    }
+
+    for (let i = 61; i <= 80; i++) {
+      const exp = (i % 6) + 1;
+      const ans = Math.pow(10, exp);
+      allQuestions.push({
+        id: i, cat: 4, catName: "Potencias Base 10",
+        title: `¿A qué número equivale 10<sup>${exp}</sup>?`,
+        options: [ans.toLocaleString('es-ES'), (10 * exp).toString(), (ans / 10).toLocaleString('es-ES'), (ans * 10).toLocaleString('es-ES')].sort(() => Math.random() - 0.5),
+        correct: ans.toLocaleString('es-ES'),
+        exp: `10<sup>${exp}</sup> es el número 1 seguido de ${exp} ceros: ${ans.toLocaleString('es-ES')}.`,
+        hint: `En las potencias de base 10, el exponente te indica directamente el número de ceros que lleva el 1.`
+      });
+    }
+
+    const problemTemplates = [
+      { t: "Un patio cuadrado tiene {x} filas de {x} baldosas cada una. ¿Cuántas baldosas hay en total?", fn: x => [x*x, `${x}² = ${x*x}`], h: "Calcula el área multiplicando filas por columnas (un cuadrado)." },
+      { t: "Una caja cúbica contiene {x} capas con {x} filas de {x} cubitos cada una. ¿Cuántos cubitos hay en total?", fn: x => [x*x*x, `${x}³ = ${x*x*x}`], h: "Calcula el volumen multiplicando ancho x alto x profundidad (${x}³)." }
+    ];
+    for (let i = 81; i <= 100; i++) {
+      const x = (i % 5) + 3;
+      const tmpl = problemTemplates[i % 2];
+      const [ans, formula] = tmpl.fn(x);
+      allQuestions.push({
+        id: i, cat: 5, catName: "Problemas",
+        title: tmpl.t.replace(/{x}/g, x),
+        options: [ans.toString(), (x * 2).toString(), (ans + x).toString(), (ans - 2).toString()].sort(() => Math.random() - 0.5),
+        correct: ans.toString(),
+        exp: `Para resolverlo calculamos ${formula}.`,
+        hint: tmpl.h
+      });
+    }
+
+    // ESTADO DEL JUEGO / RETO
+    let soundOn = true;
+    let challengeQuestions = [];
+    let currentIndex = 0;
+    let currentScore = 0;
+    let streak = 0;
+
+    function toggleSound() {
+      soundOn = !soundOn;
+      document.getElementById('sound-btn').innerText = soundOn ? "🔊 Sonido: ON" : "🔇 Sonido: OFF";
+    }
+
+    function playSound(type) {
+      if (!soundOn) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      } else {
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(110, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      }
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-learn').classList.toggle('hidden', tab !== 'learn');
+      document.getElementById('tab-practice').classList.toggle('hidden', tab !== 'practice');
+      document.getElementById('btn-learn').className = tab === 'learn' ? 'px-3.5 py-1.5 rounded-md font-semibold bg-white text-indigo-700 shadow text-sm' : 'px-3.5 py-1.5 rounded-md font-semibold text-white hover:bg-indigo-600 transition text-sm';
+      document.getElementById('btn-practice').className = tab === 'practice' ? 'px-3.5 py-1.5 rounded-md font-semibold bg-white text-indigo-700 shadow text-sm' : 'px-3.5 py-1.5 rounded-md font-semibold text-white hover:bg-indigo-600 transition text-sm';
+    }
+
+    // FUNCIONES TEORÍA
+    function updateSquare(v) {
+      document.getElementById('val-sq').innerText = v;
+      document.getElementById('lbl-sq').innerText = `${v}² = ${v} x ${v} = ${v*v}`;
+      const grid = document.getElementById('grid-2d');
+      grid.style.gridTemplateColumns = `repeat(${v}, minmax(0, 1fr))`;
+      grid.innerHTML = '';
+      for (let i = 0; i < v * v; i++) {
+        grid.innerHTML += `<div class="w-6 h-6 bg-sky-500 rounded-sm"></div>`;
+      }
+    }
+
+    function updateCube(v) {
+      document.getElementById('val-cu').innerText = v;
+      document.getElementById('lbl-cu').innerText = `${v}³ = ${v} x ${v} x ${v} = ${v*v*v}`;
+      const container = document.getElementById('cube-3d');
+      container.innerHTML = '';
+      const size = 120 / v;
+      for (let x = 0; x < v; x++) {
+        for (let y = 0; y < v; y++) {
+          for (let z = 0; z < v; z++) {
+            const pc = document.createElement('div');
+            pc.className = 'polycube';
+            pc.style.cssText = `--size: ${size}px; width:${size}px; height:${size}px; transform: translate3d(${(x - v/2)*size}px, ${(y - v/2)*size}px, ${(z - v/2)*size}px);`;
+            pc.innerHTML = `<div class="face face-front"></div><div class="face face-back"></div><div class="face face-top"></div><div class="face face-bottom"></div><div class="face face-left"></div><div class="face face-right"></div>`;
+            container.appendChild(pc);
+          }
+        }
+      }
+    }
+
+    function updateSqrt(v) {
+      const res = Math.sqrt(v);
+      document.getElementById('sqrt-display').innerHTML = `√${v} = ${res} <span class="text-sm font-normal text-emerald-700">(porque ${res}² = ${v})</span>`;
+    }
+
+    function updateBase10(v) {
+      document.getElementById('base10-exp-badge').innerText = v;
+      const zeros = "0".repeat(v);
+      const num = "1" + zeros;
+      document.getElementById('base10-display').innerHTML = `10<sup>${v}</sup> = ${parseInt(num).toLocaleString('es-ES')} <span class="text-sm font-normal text-amber-700">(${v} ceros)</span>`;
+    }
+
+    let isDragging = false, px, py, rx = -20, ry = 30;
+    const box = document.getElementById('cube-box');
+    box.addEventListener('mousedown', e => { isDragging = true; px = e.clientX; py = e.clientY; });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      ry += (e.clientX - px) * 0.5;
+      rx -= (e.clientY - py) * 0.5;
+      document.getElementById('cube-3d').style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+      px = e.clientX; py = e.clientY;
+    });
+
+    // INICIAR RETO
+    function startChallenge() {
+      const cat = document.getElementById('category-filter').value;
+      const source = cat === 'all' ? [...allQuestions] : allQuestions.filter(q => q.cat == cat);
+      
+      // Barajamos y cogemos 10 preguntas
+      challengeQuestions = source.sort(() => Math.random() - 0.5).slice(0, 10);
+      currentIndex = 0;
+      currentScore = 0;
+      streak = 0;
+
+      document.getElementById('practice-controls').classList.add('hidden');
+      document.getElementById('results-card').classList.add('hidden');
+      document.getElementById('quiz-card').classList.remove('hidden');
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = challengeQuestions[currentIndex];
+      if (!q) return;
+
+      document.getElementById('q-progress').innerText = `Pregunta ${currentIndex + 1} de ${challengeQuestions.length}`;
+      document.getElementById('q-category').innerText = q.catName;
+      document.getElementById('q-title').innerHTML = q.title;
+      document.getElementById('live-score').innerText = `${currentScore} / ${currentIndex}`;
+      
+      // Ocultar pista anterior
+      document.getElementById('hint-box').classList.add('hidden');
+      document.getElementById('hint-btn').classList.remove('hidden');
+      document.getElementById('q-feedback').classList.add('hidden');
+      document.getElementById('next-btn').classList.add('hidden');
+
+      const optsContainer = document.getElementById('q-options');
+      optsContainer.innerHTML = '';
+
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerHTML = opt;
+        btn.className = "p-4 rounded-xl border-2 text-left font-semibold transition bg-slate-50 border-slate-200 hover:border-indigo-400";
+        btn.onclick = () => selectOption(q, opt, btn);
+        optsContainer.appendChild(btn);
+      });
+    }
+
+    function showHint() {
+      const q = challengeQuestions[currentIndex];
+      const hintBox = document.getElementById('hint-box');
+      hintBox.innerHTML = `💡 <strong>Pista:</strong> ${q.hint}`;
+      hintBox.classList.remove('hidden');
+      document.getElementById('hint-btn').classList.add('hidden');
+    }
+
+    function selectOption(q, opt, selectedBtn) {
+      const buttons = document.getElementById('q-options').children;
+      for (let btn of buttons) {
+        btn.classList.add('disabled-options');
+        if (btn.innerHTML === q.correct) {
+          btn.className = "p-4 rounded-xl border-2 text-left font-semibold bg-emerald-100 border-emerald-500 text-emerald-900 disabled-options";
+        } else if (btn === selectedBtn && opt !== q.correct) {
+          btn.className = "p-4 rounded-xl border-2 text-left font-semibold bg-rose-100 border-rose-500 text-rose-900 disabled-options";
+        } else {
+          btn.className = "p-4 rounded-xl border-2 text-left font-semibold bg-slate-50 border-slate-100 text-slate-400 opacity-60 disabled-options";
+        }
+      }
+
+      const isCorrect = opt === q.correct;
+      if (isCorrect) {
+        currentScore++;
+        streak++;
+        playSound('correct');
+      } else {
+        streak = 0;
+        playSound('error');
+      }
+
+      // Actualizar racha visual
+      const streakBadge = document.getElementById('streak-badge');
+      if (streak >= 2) {
+        streakBadge.classList.remove('hidden');
+        document.getElementById('streak-count').innerText = streak;
+      } else {
+        streakBadge.classList.add('hidden');
+      }
+
+      const fb = document.getElementById('q-feedback');
+      fb.classList.remove('hidden');
+      fb.className = `p-4 rounded-lg font-medium text-sm mb-4 ${isCorrect ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`;
+      fb.innerHTML = isCorrect ? `¡Correcto! 🌟 ${q.exp}` : `¡Vaya! No es correcto. ${q.exp}`;
+
+      document.getElementById('live-score').innerText = `${currentScore} / ${currentIndex + 1}`;
+      document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < challengeQuestions.length) {
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('quiz-card').classList.add('hidden');
+      document.getElementById('results-card').classList.remove('hidden');
+      document.getElementById('practice-controls').classList.remove('hidden');
+
+      const desc = document.getElementById('result-desc');
+      const medal = document.getElementById('result-medal');
+      const title = document.getElementById('result-title');
+
+      desc.innerText = `Has obtenido ${currentScore} aciertos de un total de 10 preguntas.`;
+
+      if (currentScore === 10) {
+        medal.innerText = "🥇";
+        title.innerText = "¡Medalla de Oro!";
+        if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      } else if (currentScore >= 7) {
+        medal.innerText = "🥈";
+        title.innerText = "¡Medalla de Plata!";
+        if (typeof confetti === 'function') confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+      } else if (currentScore >= 4) {
+        medal.innerText = "🥉";
+        title.innerText = "¡Medalla de Bronce!";
+      } else {
+        medal.innerText = "💪";
+        title.innerText = "¡Sigue practicando!";
+      }
+    }
+
+    // Inicializar visuales
+    updateSquare(3);
+    updateCube(3);
+  </script>
+</body>
+</html>
